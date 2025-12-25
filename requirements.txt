@@ -1,0 +1,9 @@
+prefect==2.14.10
+dask[complete]==2024.8.1
+pandas==2.2.2
+requests==2.32.3
+sqlalchemy==2.0.31
+psycopg2-binary==2.9.9
+pyarrow==16.1.0
+streamlit==1.35.0
+python-dotenv==1.0.1

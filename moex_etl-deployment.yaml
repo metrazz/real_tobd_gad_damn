@@ -1,0 +1,56 @@
+###
+### A complete description of a Prefect Deployment for flow 'moex-etl'
+###
+name: moex
+description: 'End-to-end ETL: extract trades, transform, and load into Postgres.'
+version: 82407b7cc2f946ddc84ba3d348f7cc76
+# The work queue that will handle this deployment's runs
+work_queue_name: default
+work_pool_name: default-agent-pool
+tags: []
+parameters: {}
+schedule: null
+is_schedule_active: true
+infra_overrides: {}
+
+###
+### DO NOT EDIT BELOW THIS LINE
+###
+flow_name: moex-etl
+manifest_path: null
+infrastructure:
+  type: process
+  env: {}
+  labels: {}
+  name: null
+  command: null
+  stream_output: true
+  working_dir: null
+  _block_document_id: b5e7e595-7dc0-4937-abde-99b28ee22cef
+  _block_document_name: anonymous-35b299df-895b-42a2-9ab8-62a1cf8c996f
+  _is_anonymous: true
+  block_type_slug: process
+  _block_type_slug: process
+storage: null
+path: /opt/flows
+entrypoint: flows/moex_flow.py:moex_etl
+parameter_openapi_schema:
+  title: Parameters
+  type: object
+  properties:
+    tickers:
+      title: tickers
+      position: 0
+      type: array
+      items:
+        type: string
+    trade_date:
+      title: trade_date
+      position: 1
+      type: string
+  required:
+  - tickers
+  definitions: null
+timestamp: '2025-12-25T22:57:20.581671+00:00'
+triggers: []
+enforce_parameter_schema: null
