@@ -1,88 +1,88 @@
-version: "3.9"
+version: "3.9"  # версия синтаксиса compose
 
 services:
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: prefect
-      POSTGRES_PASSWORD: prefect
-      POSTGRES_DB: postgres
+  postgres:  # сервис базы данных
+    image: postgres:15  # образ Postgres
+    environment:  # переменные окружения для БД
+      POSTGRES_USER: prefect  # пользователь
+      POSTGRES_PASSWORD: prefect  # пароль
+      POSTGRES_DB: postgres  # имя БД по умолчанию
     ports:
-      - "5432:5432"
+      - "5432:5432"  # проброс порта Postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    healthcheck:
+      - postgres_data:/var/lib/postgresql/data  # хранилище данных
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro  # инициализация схем
+    healthcheck:  # проверка готовности БД
       test: ["CMD-SHELL", "pg_isready -U prefect"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  prefect:
-    image: prefecthq/prefect:2.14.10-python3.11
-    command: ["prefect", "server", "start", "--host", "0.0.0.0"]
+  prefect:  # Prefect server UI + API
+    image: prefecthq/prefect:2.14.10-python3.11  # образ Prefect
+    command: ["prefect", "server", "start", "--host", "0.0.0.0"]  # запуск сервера
     environment:
-      PREFECT_API_URL: http://prefect:4200/api
+      PREFECT_API_URL: http://prefect:4200/api  # адрес API Prefect
     ports:
-      - "4200:4200"
+      - "4200:4200"  # проброс UI/ API Prefect
     depends_on:
-      - postgres
+      - postgres  # ждать готовности Postgres
 
-  agent:
-    image: prefecthq/prefect:2.14.10-python3.11
-    entrypoint: /bin/bash
+  agent:  # агент Prefect для выполнения flow
+    image: prefecthq/prefect:2.14.10-python3.11  # образ Prefect
+    entrypoint: /bin/bash  # shell-вход
     command:
       - -lc
       - |
-        prefect config set PREFECT_API_URL=http://prefect:4200/api
-        prefect agent start -q default
-    working_dir: /opt/flows
+        prefect config set PREFECT_API_URL=http://prefect:4200/api  # конфиг API
+        prefect agent start -q default  # запуск агента с очередью default
+    working_dir: /opt/flows  # рабочая директория внутри контейнера
     volumes:
-      - ./:/opt/flows
+      - ./:/opt/flows  # монтируем код проекта
     environment:
-      DATABASE_URL: postgresql+psycopg2://prefect:prefect@postgres:5432/moex
-      DASK_SCHEDULER: tcp://scheduler:8786
+      DATABASE_URL: postgresql+psycopg2://prefect:prefect@postgres:5432/moex  # строка подключения
+      DASK_SCHEDULER: tcp://scheduler:8786  # адрес Dask scheduler (по умолчанию)
     depends_on:
-      - prefect
-      - scheduler
-      - postgres
+      - prefect  # ждать Prefect server
+      - scheduler  # ждать Dask scheduler
+      - postgres  # ждать Postgres
 
-  scheduler:
-    image: daskdev/dask:latest
-    command: ["dask-scheduler"]
+  scheduler:  # Dask scheduler
+    image: daskdev/dask:latest  # образ Dask
+    command: ["dask-scheduler"]  # запуск планировщика
     ports:
-      - "8786:8786"
-      - "8787:8787"
+      - "8786:8786"  # RPC
+      - "8787:8787"  # Dask dashboard
     depends_on:
-      - postgres
+      - postgres  # зависимость для порядка
 
-  worker:
-    image: daskdev/dask:latest
-    command: ["dask-worker", "tcp://scheduler:8786"]
+  worker:  # Dask worker
+    image: daskdev/dask:latest  # образ Dask
+    command: ["dask-worker", "tcp://scheduler:8786"]  # адрес планировщика
     environment:
-      EXTRA_APT_PACKAGES: "git"
+      EXTRA_APT_PACKAGES: "git"  # пример доп. пакетов
     volumes:
-      - ./:/opt/flows
+      - ./:/opt/flows  # монтируем код проекта
     depends_on:
-      - scheduler
+      - scheduler  # ждать scheduler
 
-  streamlit:
-    image: prefecthq/prefect:2.14.10-python3.11
-    entrypoint: /bin/bash
-    working_dir: /opt/flows
+  streamlit:  # сервис дашборда
+    image: prefecthq/prefect:2.14.10-python3.11  # используем тот же базовый образ
+    entrypoint: /bin/bash  # shell-вход
+    working_dir: /opt/flows  # рабочая директория
     command:
       - -lc
       - |
-        pip install -r requirements.txt
-        streamlit run dashboards/app.py --server.port=8501 --server.address=0.0.0.0
+        pip install -r requirements.txt  # установка зависимостей
+        streamlit run dashboards/app.py --server.port=8501 --server.address=0.0.0.0  # запуск UI
     environment:
-      DATABASE_URL: postgresql+psycopg2://prefect:prefect@postgres:5432/moex
+      DATABASE_URL: postgresql+psycopg2://prefect:prefect@postgres:5432/moex  # строка подключения
     volumes:
-      - ./:/opt/flows
+      - ./:/opt/flows  # монтируем код проекта
     ports:
-      - "8501:8501"
+      - "8501:8501"  # проброс Streamlit UI
     depends_on:
-      - postgres
+      - postgres  # ждать Postgres
 
 volumes:
-  postgres_data:
+  postgres_data:  # том для данных Postgres
