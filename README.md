@@ -91,8 +91,3 @@ python flows/moex_flow.py
 - Worker логи (Dask threads всё равно локально): `docker compose logs -f worker`
 - Dask dashboard: http://localhost:8787
 - Prefect UI: http://localhost:4200
-
-## Частые проблемы
-- **Нет данных** — выбрана дата без торгов или тикер не на TQBR.
-- **Падение scheduler** — сейчас вычисления на локальных threads; переменная `DASK_SCHEDULER` не используется.
-- **Порты заняты** — поправьте маппинг в `docker-compose.yml`.
